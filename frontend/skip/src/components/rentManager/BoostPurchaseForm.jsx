@@ -3,25 +3,36 @@ import '../../css/rentAdForm.css';
 import '../../css/userlist.css';
 import { fetchCash, purchaseBoost } from '../../services/admin/rent/AdService';
 import { useSelector } from 'react-redux';
+import { findRentByUserId } from '../../services/admin/RentListService';
 
 const BoostPurchaseForm = () => {
   const { userId } = useSelector(state => state.loginSlice);
   const [currentCash, setCurrentCash] = useState(0);
   const [boost, setBoost] = useState('');
   const [cpb, setCpb] = useState('');
+  const [rentList, setRentList] = useState([]);
+  const [selectedRentId, setSelectedRentId] = useState(0);
+
+  useEffect(() => {
+    if (!userId) return;
+    findRentByUserId(userId).then(list => {
+      setRentList(list);
+      if (list.length > 0) setSelectedRentId(list[0].rentId);
+    });
+  }, [userId]);
 
   useEffect(() => {
     const load = async () => {
-      if (!userId) return;
-      const cash = await fetchCash(userId);
+      if (!userId || !selectedRentId) return;
+      const cash = await fetchCash(userId, selectedRentId);
       setCurrentCash(cash);
     };
     load();
-  }, [userId]);
+  }, [userId, selectedRentId]);
 
   const handlePurchase = async e => {
     e.preventDefault();
-    const remaining = await purchaseBoost(userId, Number(boost), Number(cpb));
+    const remaining = await purchaseBoost(userId, selectedRentId, Number(boost), Number(cpb));
     if (remaining != null) setCurrentCash(remaining);
     setBoost('');
     setCpb('');
@@ -47,6 +58,14 @@ const BoostPurchaseForm = () => {
       </h3>
       <div className="form-container" >
         <form onSubmit={handlePurchase}>
+          <div className="form-group">
+            <label>렌탈샵 선택</label>
+            <select value={selectedRentId} onChange={e => setSelectedRentId(Number(e.target.value))}>
+              {rentList.map(r => (
+                <option key={r.rentId} value={r.rentId}>{r.name}</option>
+              ))}
+            </select>
+          </div>
           <div className="form-group">
             <label>현재 보유 캐시</label>
             <input type="text" value={currentCash} readOnly />

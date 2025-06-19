@@ -19,13 +19,15 @@ import java.util.List;
 public class RentExcelExportService {
     private final AdminReportRepository reportRepo;
 
-    public void writeExcelForUser(OutputStream os, Long userId, String startDate, String endDate) {
+    public void writeExcelForUser(OutputStream os, Long userId, Long rentId, String startDate, String endDate) {
         LocalDate sd = LocalDate.parse(startDate, DateTimeFormatter.ISO_DATE);
         LocalDate ed = LocalDate.parse(endDate, DateTimeFormatter.ISO_DATE);
         LocalDateTime start = sd.atStartOfDay();
         LocalDateTime end = ed.atTime(LocalTime.MAX);
 
-        List<AdminDetailDTO> details = reportRepo.findAllDetailsByUserBetween(userId, start, end);
+        List<AdminDetailDTO> details = (rentId != null)
+                ? reportRepo.findAllDetailsByUserAndRentBetween(userId, rentId, start, end)
+                : reportRepo.findAllDetailsByUserBetween(userId, start, end);
 
         try (SXSSFWorkbook wb = new SXSSFWorkbook()) {
             Sheet detailSheet = wb.createSheet("Details");

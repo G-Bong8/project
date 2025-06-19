@@ -8,5 +8,6 @@ public class AdCashChargeDTO {
     private String merchantUid;
     private Long amount; // 결제 금액
     private Long userId;
+    private Long rentId;
     private String pgProvider;
 }

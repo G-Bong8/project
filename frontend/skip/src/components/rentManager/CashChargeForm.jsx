@@ -3,21 +3,32 @@ import '../../css/rentAdForm.css';
 import '../../css/userlist.css';
 import { fetchCash, chargeCash } from '../../services/admin/rent/AdService';
 import { useSelector } from 'react-redux';
+import { findRentByUserId } from '../../services/admin/RentListService';
 
 const CashChargeForm = () => {
   const { userId } = useSelector(state => state.loginSlice);
   const [currentCash, setCurrentCash] = useState(0);
   const [amount, setAmount] = useState('');
   const [pg, setPg] = useState('kakaopay.TC0ONETIME');
+  const [rentList, setRentList] = useState([]);
+  const [selectedRentId, setSelectedRentId] = useState(0);
+
+  useEffect(() => {
+    if (!userId) return;
+    findRentByUserId(userId).then(list => {
+      setRentList(list);
+      if (list.length > 0) setSelectedRentId(list[0].rentId);
+    });
+  }, [userId]);
 
   useEffect(() => {
     const load = async () => {
-      if (!userId) return;
-      const cash = await fetchCash(userId);
+      if (!userId || !selectedRentId) return;
+      const cash = await fetchCash(userId, selectedRentId);
       setCurrentCash(cash);
     };
     load();
-  }, [userId]);
+  }, [userId, selectedRentId]);
 
   useEffect(() => {
     if (window.IMP) {
@@ -46,9 +57,10 @@ const CashChargeForm = () => {
           merchantUid: rsp.merchant_uid,
           amount: rsp.paid_amount,
           userId,
+          rentId: selectedRentId,
           pgProvider: pg,
         });
-        const cash = await fetchCash(userId);
+        const cash = await fetchCash(userId, selectedRentId);
         setCurrentCash(cash);
       } else {
         alert('결제 실패: ' + rsp.error_msg);
@@ -77,6 +89,14 @@ const CashChargeForm = () => {
       </h3>
       <div className="form-container">
         <form onSubmit={handleCharge}>
+          <div className="form-group">
+            <label>렌탈샵 선택</label>
+            <select value={selectedRentId} onChange={e => setSelectedRentId(Number(e.target.value))}>
+              {rentList.map(r => (
+                <option key={r.rentId} value={r.rentId}>{r.name}</option>
+              ))}
+            </select>
+          </div>
           <div className="form-group">
             <label>현재 보유 캐시</label>
             <input type="text" value={currentCash} readOnly />

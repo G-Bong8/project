@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-export const fetchCash = async userId => {
-  const resp = await axios.get('/api/rentAdmin/cash', { params: { userId } });
+export const fetchCash = async (userId, rentId) => {
+  const resp = await axios.get('/api/rentAdmin/cash', { params: { userId, rentId } });
   return resp.data.remainingCash;
 };
 
@@ -10,8 +10,8 @@ export const chargeCash = async data => {
   return resp.data.remainingCash;
 };
 
-export const purchaseBoost = async (userId, boost, cpb) => {
-  const resp = await axios.post('/api/rentAdmin/boost', { userId, boost, cpb });
+export const purchaseBoost = async (userId, rentId, boost, cpb) => {
+  const resp = await axios.post('/api/rentAdmin/boost', { userId, rentId, boost, cpb });
   return resp.data.remainingCash;
 };
 

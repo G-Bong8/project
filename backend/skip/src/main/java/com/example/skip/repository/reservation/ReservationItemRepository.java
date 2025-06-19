@@ -57,6 +57,27 @@ public interface ReservationItemRepository extends JpaRepository<ReservationItem
             @Param("end") LocalDateTime end
     );
 
+    @Query("""
+    SELECT COUNT(DISTINCT p)
+    FROM ReservationItem ri
+    JOIN ri.reservation r
+    JOIN r.payment p
+    JOIN ri.itemDetail id
+    JOIN id.item i
+    WHERE i.category = :category
+      AND r.rent.user.userId = :userId
+      AND r.rent.rentId = :rentId
+      AND p.createdAt BETWEEN :start AND :end
+      AND p.status = 'PAID'
+    """)
+    Long countPaymentsByUserAndItemCategoryAndRent(
+            @Param("userId") Long userId,
+            @Param("rentId") Long rentId,
+            @Param("category") ItemCategory category,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
     // ** rentStart~rentEnd 기간 동안 이미 예약된 수량을 합산하는 쿼리(대여기간이 겹치는지 확인) **
     // 사용자가 예약하려는 수량이 가능한지 판단(결제 시)
     @Query("SELECT COALESCE(SUM(ri.quantity), 0) FROM ReservationItem ri " +

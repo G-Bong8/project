@@ -31,6 +31,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long>,
 
     Long countByRent_User_UserId(Long userId);
 
+    Long countByRent_RentId(Long rentId);
+
     //해당 렌탈샵 가져오기
     List<Reservation> findByRentIn(List<Rent> rents);
 

@@ -5,6 +5,7 @@ import SalesSummaryChart from "../../components/adminpage/SalesSummaryChart";
 import SalesCategoryChart from "../../components/adminpage/SalesCategoryChart";
 import StatOverviewCard from "../../components/adminpage/StatOverviewCard";
 import { fetchRentSummary, fetchRentChart } from "../../services/admin/rentDashboardService";
+import { findRentByUserId } from "../../services/admin/RentListService";
 import Odometer from "react-odometerjs";
 import "odometer/themes/odometer-theme-default.css";
 
@@ -23,20 +24,30 @@ const RentDashboard = () => {
   const [isClicked, setIsClicked] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [chartData, setChartData] = useState([]);
+  const [rentList, setRentList] = useState([]);
+  const [selectedRentId, setSelectedRentId] = useState(0);
+
+  useEffect(() => {
+    if (!userId) return;
+    findRentByUserId(userId).then(list => {
+      setRentList(list);
+      if (list.length > 0) setSelectedRentId(list[0].rentId);
+    });
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
     loadData();
-  }, [userId, startDate, endDate]);
+  }, [userId, selectedRentId, startDate, endDate]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const loadData = async () => {
-    const summary = await fetchRentSummary(userId, startDate, endDate);
+    const summary = await fetchRentSummary(userId, selectedRentId, startDate, endDate);
     setSummaryData(summary);
-    const chart = await fetchRentChart(userId, startDate, endDate);
+    const chart = await fetchRentChart(userId, selectedRentId, startDate, endDate);
     setChartData(chart);
   };
 
@@ -44,13 +55,18 @@ const RentDashboard = () => {
     setIsClicked(type);
     setTimeout(() => setIsClicked(null), 150);
     const extension = type === ".xlsx" || type === ".cell" ? type : "";
-    window.location.href = `/api/rentAdmin/summary/export?userId=${userId}&atStart=${startDate}&atEnd=${endDate}&extension=${extension}`;
+    window.location.href = `/api/rentAdmin/summary/export?userId=${userId}&rentId=${selectedRentId}&atStart=${startDate}&atEnd=${endDate}&extension=${extension}`;
   };
   
 
   return (
     <div className="admin-dashboard" style={{ paddingTop:"0px", backgroundColor: "#f1f3f5" }}>
       <h2>📊 렌탈샵 매출 관리</h2>
+      <select value={selectedRentId} onChange={e => setSelectedRentId(Number(e.target.value))} style={{marginTop:"10px"}}>
+        {rentList.map(r => (
+          <option key={r.rentId} value={r.rentId}>{r.name}</option>
+        ))}
+      </select>
       <div style={{ display: "flex", marginTop: "10px" }}>
         <div className="date-card">
           <h3>📅 조회일자 선택</h3>
