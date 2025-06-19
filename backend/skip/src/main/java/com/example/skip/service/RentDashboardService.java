@@ -26,26 +26,53 @@ public class RentDashboardService {
     @Autowired
     private ReservationRepository reservationRepository;
 
-    public Map<String, Object> getSummary(Long userId, LocalDate start, LocalDate end) {
+    public Map<String, Object> getSummary(Long userId, Long rentId, LocalDate start, LocalDate end) {
         LocalDateTime from = start.atStartOfDay();
         LocalDateTime to = end.plusDays(1).atStartOfDay();
 
-        double totalSales = Optional.ofNullable(paymentRepository.getTotalPaidPriceByUser(userId, from, to)).orElse(0.0)
-                + Optional.ofNullable(paymentRepository.getCancelledSalesByUser(userId, from, to)).orElse(0.0);
-        long totalSalesCount = Optional.ofNullable(paymentRepository.getPaidCountByUser(userId, from, to)).orElse(0L)
-                + Optional.ofNullable(paymentRepository.getCancelledCountByUser(userId, from, to)).orElse(0L);
-        double profit = Optional.ofNullable(paymentRepository.getRentProfitByUser(userId, from, to)).orElse(0.0);
-        long successCount = Optional.ofNullable(paymentRepository.getPaidCountByUser(userId, from, to)).orElse(0L);
-        double cancelPrice = Optional.ofNullable(paymentRepository.getCancelledSalesByUser(userId, from, to)).orElse(0.0);
-        long cancelCount = Optional.ofNullable(paymentRepository.getCancelledCountByUser(userId, from, to)).orElse(0L);
+        double totalSales;
+        long totalSalesCount;
+        double profit;
+        long successCount;
+        double cancelPrice;
+        long cancelCount;
 
-        int totalAdCash = rentRepository
-                .findByUser_UserIdAndUseYn(userId, YesNo.Y, Sort.unsorted())
-                .stream()
-                .mapToInt(Rent::getRemainAdCash)
-                .sum();
+        if (rentId != null) {
+            totalSales = Optional.ofNullable(paymentRepository.getTotalPaidPriceByRent(userId, rentId, from, to)).orElse(0.0)
+                    + Optional.ofNullable(paymentRepository.getCancelledSalesByRent(userId, rentId, from, to)).orElse(0.0);
+            totalSalesCount = Optional.ofNullable(paymentRepository.getPaidCountByRent(userId, rentId, from, to)).orElse(0L)
+                    + Optional.ofNullable(paymentRepository.getCancelledCountByRent(userId, rentId, from, to)).orElse(0L);
+            profit = Optional.ofNullable(paymentRepository.getRentProfitByRent(userId, rentId, from, to)).orElse(0.0);
+            successCount = Optional.ofNullable(paymentRepository.getPaidCountByRent(userId, rentId, from, to)).orElse(0L);
+            cancelPrice = Optional.ofNullable(paymentRepository.getCancelledSalesByRent(userId, rentId, from, to)).orElse(0.0);
+            cancelCount = Optional.ofNullable(paymentRepository.getCancelledCountByRent(userId, rentId, from, to)).orElse(0L);
+        } else {
+            totalSales = Optional.ofNullable(paymentRepository.getTotalPaidPriceByUser(userId, from, to)).orElse(0.0)
+                    + Optional.ofNullable(paymentRepository.getCancelledSalesByUser(userId, from, to)).orElse(0.0);
+            totalSalesCount = Optional.ofNullable(paymentRepository.getPaidCountByUser(userId, from, to)).orElse(0L)
+                    + Optional.ofNullable(paymentRepository.getCancelledCountByUser(userId, from, to)).orElse(0L);
+            profit = Optional.ofNullable(paymentRepository.getRentProfitByUser(userId, from, to)).orElse(0.0);
+            successCount = Optional.ofNullable(paymentRepository.getPaidCountByUser(userId, from, to)).orElse(0L);
+            cancelPrice = Optional.ofNullable(paymentRepository.getCancelledSalesByUser(userId, from, to)).orElse(0.0);
+            cancelCount = Optional.ofNullable(paymentRepository.getCancelledCountByUser(userId, from, to)).orElse(0L);
+        }
 
-        long reservationCount = reservationRepository.countByRent_User_UserId(userId);
+        int totalAdCash;
+        if (rentId != null) {
+            totalAdCash = rentRepository.findById(rentId)
+                    .map(Rent::getRemainAdCash)
+                    .orElse(0);
+        } else {
+            totalAdCash = rentRepository
+                    .findByUser_UserIdAndUseYn(userId, YesNo.Y, Sort.unsorted())
+                    .stream()
+                    .mapToInt(Rent::getRemainAdCash)
+                    .sum();
+        }
+
+        long reservationCount = rentId != null ?
+                reservationRepository.countByRent_RentId(rentId) :
+                reservationRepository.countByRent_User_UserId(userId);
 
         Map<String, Object> result = new HashMap<>();
         result.put("totalSales", totalSales);
@@ -59,15 +86,22 @@ public class RentDashboardService {
         return result;
     }
 
-    public List<Map<String, Object>> getSalesChartData(Long userId, LocalDate start, LocalDate end) {
+    public List<Map<String, Object>> getSalesChartData(Long userId, Long rentId, LocalDate start, LocalDate end) {
         List<Map<String, Object>> result = new ArrayList<>();
         for (ItemCategory category : ItemCategory.values()) {
-            long count = reservationItemRepository.countPaymentsByUserAndItemCategory(
-                    userId,
-                    category,
-                    start.atStartOfDay(),
-                    end.plusDays(1).atStartOfDay()
-            );
+            long count = (rentId != null)
+                    ? reservationItemRepository.countPaymentsByUserAndItemCategoryAndRent(
+                        userId,
+                        rentId,
+                        category,
+                        start.atStartOfDay(),
+                        end.plusDays(1).atStartOfDay())
+                    : reservationItemRepository.countPaymentsByUserAndItemCategory(
+                        userId,
+                        category,
+                        start.atStartOfDay(),
+                        end.plusDays(1).atStartOfDay()
+                    );
             Map<String, Object> map = new HashMap<>();
             map.put("category", category.toString());
             map.put("count", count);

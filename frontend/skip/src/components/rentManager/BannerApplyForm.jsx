@@ -4,6 +4,7 @@ import '../../css/userlist.css';
 import { fetchActiveBanners } from '../../services/admin/BannerService';
 import { submitBannerRequest } from '../../services/admin/rent/AdService';
 import { useSelector } from 'react-redux';
+import { findRentByUserId } from '../../services/admin/RentListService';
 
 const BannerApplyForm = () => {
   const { userId } = useSelector(state => state.loginSlice);
@@ -14,8 +15,18 @@ const BannerApplyForm = () => {
   const [finalScore, setFinalScore] = useState(0);
   const [percentile, setPercentile] = useState(0);
   const [activeScores, setActiveScores] = useState([]);
-  const [selectedFileName, setSelectedFileName] = useState('');    
+  const [selectedFileName, setSelectedFileName] = useState('');
   const imageRef = useRef();
+  const [rentList, setRentList] = useState([]);
+  const [selectedRentId, setSelectedRentId] = useState(0);
+
+  useEffect(() => {
+    if (!userId) return;
+    findRentByUserId(userId).then(list => {
+      setRentList(list);
+      if (list.length > 0) setSelectedRentId(list[0].rentId);
+    });
+  }, [userId]);
 
   useEffect(() => {
     const load = async () => {
@@ -59,6 +70,7 @@ const BannerApplyForm = () => {
     e.preventDefault();
     const form = new FormData();
     form.append('userId', userId);
+    form.append('rentId', selectedRentId);
     form.append('cpcBid', cpcBid);
     if (imageRef.current?.files[0]) form.append('bannerImage', imageRef.current.files[0]);
     await submitBannerRequest(form);
@@ -92,6 +104,14 @@ const BannerApplyForm = () => {
       </h3>
       <div className="form-container" style={{margin:"0px"}}>
         <form onSubmit={handleSubmit} encType="multipart/form-data">
+          <div className="form-group">
+            <label>렌탈샵 선택</label>
+            <select value={selectedRentId} onChange={e => setSelectedRentId(Number(e.target.value))}>
+              {rentList.map(r => (
+                <option key={r.rentId} value={r.rentId}>{r.name}</option>
+              ))}
+            </select>
+          </div>
           <div className="form-group">
             <label>이번 주 최고 입찰가</label>
             <input type="text" value={maxBid} readOnly/>
