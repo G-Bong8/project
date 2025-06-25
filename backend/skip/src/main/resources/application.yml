@@ -11,12 +11,12 @@ spring:
 
   datasource:
 #    driver-class-name: org.mariadb.jdbc.Driver
-#    url: jdbc:mariadb://192.168.80.13:3306/skip    # 권새미 데이터베이스 설정
-#    username: hello
-#    password: hello1234
-    url: jdbc:mariadb://192.168.80.13:3306/testdb # 권새미 데이터베이스 설정
+    url: jdbc:mariadb://192.168.80.13:3306/skip    # 권새미 데이터베이스 설정
     username: hello
     password: hello1234
+#    url: jdbc:mariadb://192.168.80.13:3306/testdb # 권새미 데이터베이스 설정
+#    username: hello
+#    password: hello1234
 
 #    url: jdbc:mariadb://${database.host}:3306/projectdb # 오정빈 데이터베이스 설정
 #    username: ${MARIADB_USERNAME}
