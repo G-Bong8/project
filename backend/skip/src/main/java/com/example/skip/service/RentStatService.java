@@ -6,6 +6,7 @@ import com.example.skip.entity.DailyRentStat;
 import com.example.skip.entity.QDailyRentStat;
 import com.example.skip.entity.QRent;
 import com.example.skip.entity.Rent;
+import com.example.skip.enumeration.UserStatus;
 import com.example.skip.repository.DailyRentStatRepository;
 import com.example.skip.repository.RentRepository;
 import com.example.skip.repository.reservation.ReservationRepository;
@@ -66,6 +67,7 @@ public class RentStatService {
                 .select(dailyRentStat.rent, dailyRentStat.reservationCount.sum())
                 .from(dailyRentStat)
                 .join(dailyRentStat.rent, rent)
+                .where(rent.status.eq(UserStatus.APPROVED))
                 .where(rankingRequest.toPredicate(dailyRentStat))
                 .groupBy(dailyRentStat.rent)
                 .orderBy(dailyRentStat.reservationCount.sum().desc())

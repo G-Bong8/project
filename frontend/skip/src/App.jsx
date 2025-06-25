@@ -52,11 +52,19 @@ import BannerResubmitPage from "./pages/rentalAdmin/BannerResubmitPage"
 import ReservationList from './components/rentManager/ReservationList';
 import SearchResultPage from "./pages/SearchResultPage"
 
+const safeUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = (Math.random() * 16) | 0,
+        v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+};
+
 
 function App() {
     let deviceId = localStorage.getItem('deviceId');
     if (!deviceId) {
-        deviceId = crypto.randomUUID();
+        deviceId = safeUUID();
         localStorage.setItem('deviceId', deviceId);
     }
 

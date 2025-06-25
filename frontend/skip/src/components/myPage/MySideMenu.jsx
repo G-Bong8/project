@@ -115,12 +115,12 @@ const MySideMenu = ({group, active}) => {
                                     </li>
 
                                     <li>
-                                        <a
-                                            href="/mypage/refund"
+                                        <Link
+                                            to="/mypage/refund"
                                             className={`${tab} ${active == 'refund' ? active_style : inactive_style}`}
                                         >
                                             환불 내역
-                                        </a>
+                                        </Link>
                                     </li>
                                 </ul>
                             </details>
